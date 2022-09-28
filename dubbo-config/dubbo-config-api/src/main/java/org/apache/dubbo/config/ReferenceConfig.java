@@ -508,6 +508,19 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
     }
 
     /**
+     * if consumer in istio mode, will change url that istio can intercept url
+     * in nacos, url pattern is {serviceName}.{nacosgroup}.{nacosNamespace}.nacos
+     * when use other registry, it will extend
+     * @param referenceParameters
+     */
+    private void istioModeHandleUrl(Map<String, String> referenceParameters) {
+        // serviceName
+        String providedBy = referenceParameters.get(PROVIDED_BY);
+        // get registry info nacosGroup, nacosNamespace
+        referenceParameters.get
+    }
+
+    /**
      * check if mesh config is correct
      *
      * @param referenceParameters referenceParameters
