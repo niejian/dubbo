@@ -117,6 +117,13 @@ public interface RegistryConstants {
     String PROVIDER_NAMESPACE = "provider-namespace";
 
     /**
+     * provider namespace
+     *
+     * @since 3.1.1
+     */
+    String ISTIO_ENABLE = "istio-enable";
+
+    /**
      * The request size of service instances
      *
      * @since 2.7.5

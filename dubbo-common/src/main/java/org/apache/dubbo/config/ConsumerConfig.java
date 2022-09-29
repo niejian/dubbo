@@ -20,6 +20,7 @@ import org.apache.dubbo.common.utils.StringUtils;
 import org.apache.dubbo.config.support.Parameter;
 import org.apache.dubbo.rpc.model.ModuleModel;
 
+import static org.apache.dubbo.common.constants.CommonConstants.ISTIO_ENABLE;
 import static org.apache.dubbo.common.constants.CommonConstants.MESH_ENABLE;
 import static org.apache.dubbo.common.constants.CommonConstants.REFER_BACKGROUND_KEY;
 import static org.apache.dubbo.common.constants.CommonConstants.REFER_THREAD_NUM_KEY;
@@ -84,6 +85,12 @@ public class ConsumerConfig extends AbstractReferenceConfig {
      * @since 3.1.0
      */
     private Boolean meshEnable;
+
+    /**
+     * enable istio mode
+     * @since 3.1.1
+     */
+    private Boolean istioEnable;
 
 
     public ConsumerConfig() {
@@ -185,5 +192,14 @@ public class ConsumerConfig extends AbstractReferenceConfig {
 
     public void setMeshEnable(Boolean meshEnable) {
         this.meshEnable = meshEnable;
+    }
+
+    public void setIstioEnable(Boolean istioEnable) {
+        this.istioEnable = istioEnable;
+    }
+
+    @Parameter(key = ISTIO_ENABLE)
+    public Boolean getIstioEnable() {
+        return istioEnable;
     }
 }

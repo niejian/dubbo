@@ -577,4 +577,9 @@ public interface CommonConstants {
      */
     String UNLOAD_CLUSTER_RELATED = "unloadClusterRelated";
 
+    /**
+     * @since 3.1.1
+     */
+    String ISTIO_ENABLE = "istio-enable";
+
 }

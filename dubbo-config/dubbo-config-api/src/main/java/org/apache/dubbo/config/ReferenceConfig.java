@@ -61,26 +61,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.StringJoiner;
 
-import static org.apache.dubbo.common.constants.CommonConstants.ANY_VALUE;
-import static org.apache.dubbo.common.constants.CommonConstants.CLUSTER_KEY;
-import static org.apache.dubbo.common.constants.CommonConstants.COMMA_SEPARATOR;
-import static org.apache.dubbo.common.constants.CommonConstants.COMMA_SEPARATOR_CHAR;
-import static org.apache.dubbo.common.constants.CommonConstants.CONSUMER_SIDE;
-import static org.apache.dubbo.common.constants.CommonConstants.DEFAULT_CLUSTER_DOMAIN;
-import static org.apache.dubbo.common.constants.CommonConstants.DEFAULT_MESH_PORT;
-import static org.apache.dubbo.common.constants.CommonConstants.INTERFACE_KEY;
-import static org.apache.dubbo.common.constants.CommonConstants.LOCALHOST_VALUE;
-import static org.apache.dubbo.common.constants.CommonConstants.MESH_ENABLE;
-import static org.apache.dubbo.common.constants.CommonConstants.METHODS_KEY;
-import static org.apache.dubbo.common.constants.CommonConstants.MONITOR_KEY;
-import static org.apache.dubbo.common.constants.CommonConstants.PROXY_CLASS_REF;
-import static org.apache.dubbo.common.constants.CommonConstants.REVISION_KEY;
-import static org.apache.dubbo.common.constants.CommonConstants.SEMICOLON_SPLIT_PATTERN;
-import static org.apache.dubbo.common.constants.CommonConstants.SIDE_KEY;
-import static org.apache.dubbo.common.constants.CommonConstants.SVC;
-import static org.apache.dubbo.common.constants.CommonConstants.TRIPLE;
-import static org.apache.dubbo.common.constants.CommonConstants.UNLOAD_CLUSTER_RELATED;
+import static org.apache.dubbo.common.constants.CommonConstants.*;
 import static org.apache.dubbo.common.constants.LoggerCodeConstants.CLUSTER_NO_VALID_PROVIDER;
 import static org.apache.dubbo.common.constants.LoggerCodeConstants.CONFIG_FAILED_DESTROY_INVOKER;
 import static org.apache.dubbo.common.constants.LoggerCodeConstants.CONFIG_NO_METHOD_FOUND;
@@ -503,21 +486,45 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
         Integer meshPort = Optional.ofNullable(getProviderPort()).orElse(DEFAULT_MESH_PORT);
         // DubboReference default is -1, process it.
         meshPort = meshPort > -1 ? meshPort : DEFAULT_MESH_PORT;
-        // get mesh url.
-        url = TRIPLE + "://" + providedBy + "." + podNamespace + SVC + clusterDomain + ":" + meshPort;
+        // enable istio intercept
+        if (referenceParameters.getOrDefault(ISTIO_ENABLE, "false").equals("true")) {
+            // convert url that istio can intercept
+            url = TRIPLE + "://" + istioModeHandleUrl(referenceParameters) + ":" + meshPort;
+        }else {
+            // get mesh url.
+            url = TRIPLE + "://" + providedBy + "." + podNamespace + SVC + clusterDomain + ":" + meshPort;
+        }
     }
 
     /**
      * if consumer in istio mode, will change url that istio can intercept url
      * in nacos, url pattern is {serviceName}.{nacosgroup}.{nacosNamespace}.nacos
      * when use other registry, it will extend
+     * since 3.1.1
      * @param referenceParameters
+     * @return istio mesh url
      */
-    private void istioModeHandleUrl(Map<String, String> referenceParameters) {
+    private String istioModeHandleUrl(Map<String, String> referenceParameters) {
+        StringJoiner istioInterceptorUrl = new StringJoiner(".");
         // serviceName
-        String providedBy = referenceParameters.get(PROVIDED_BY);
+        String serviceName = referenceParameters.get(PROVIDED_BY);
         // get registry info nacosGroup, nacosNamespace
-        referenceParameters.get
+        // TODO find way to get registry info (only for nacos)
+        // invoke this method, will get registry
+        checkRegistry();
+        RegistryConfig registryConfig = this.getRegistry();
+        String protocol = registryConfig.getProtocol();
+        if ("nacos".equals(protocol)) {
+            String nacosGroup = registryConfig.getGroup();
+            if (StringUtils.isEmpty(nacosGroup)) {
+                nacosGroup = "DEFAULT_GROUP";
+            }
+            Map<String, String> nacosParams = Optional.ofNullable(registryConfig.getParameters()).orElse(new HashMap<>(4));
+            String nacosNamespace = nacosParams.getOrDefault("namespace", "public");
+            return istioInterceptorUrl.add(serviceName).add(nacosGroup).add(nacosNamespace).add("nacos").toString();
+
+        }
+        return null;
     }
 
     /**
